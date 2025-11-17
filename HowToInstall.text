@@ -1,0 +1,14 @@
+How to use
+
+Make sure you have Python 3 installed.
+Run the installer:
+./install.sh
+
+
+To install and immediately run the app:
+./install.sh --run
+
+
+Or manually activate and run:
+source .venv/bin/activate
+python3 main.py

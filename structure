@@ -1,0 +1,25 @@
+activity_monitor/
+├── main.py                          # ← Start here (Entry point)
+├── config.py                        # ← Settings only
+│
+│
+├─ Database
+├─── database_operations.py # ← Everything about database
+|
+├─ collectors & mainpulations           
+├─── bash_history_collector.py      # ← Collect bash commands
+├─── process_collector.py             # ← Collect running processes
+├─── user_collector.py                # ← Collect logged users
+│
+├─ statistics & Export
+├─── statistics_calculator.py         # ← Calculate stats
+├─── csv_exporter.py                  # ← Export to CSV
+│
+├─ utils
+├─── gui_header.py                    # ← Top header part
+├─── gui_stats_cards.py               # ← The 3 colored cards
+├─── gui_commands_table.py            # ← Commands table
+├─── gui_control_buttons.py           # ← The 4 buttons
+├─── gui_activity_log.py              # ← Bottom log panel
+│
+└─── dashboard_main.py                # ← Combines all GUI parts
