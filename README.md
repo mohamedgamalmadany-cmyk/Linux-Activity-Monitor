@@ -1,3 +1,6 @@
+
+<img width="847" height="713" alt="image" src="https://github.com/user-attachments/assets/c2be9d5c-95a0-4536-a6c0-2e55f9fa194b" />
+<br>
 # Linux Activity Monitor
 
 A lightweight activity monitoring and analytics application for Linux (Tkinter + SQLite).
