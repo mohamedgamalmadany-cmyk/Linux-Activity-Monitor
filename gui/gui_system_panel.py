@@ -116,3 +116,24 @@ def create_system_panel(parent, update_interval_ms=2000, disk_path='/'):
         except Exception:
             # swallow UI update errors
             pass
+
+    # Background worker that polls psutil and updates the UI
+    def worker():
+        while running:
+            try:
+                data = srm.get_all(disk_path)
+                # schedule UI update on main thread
+                parent.after(0, lambda d=data: update_ui(d))
+            except Exception:
+                # ignore errors from psutil or UI scheduling
+                pass
+            time.sleep(update_interval_ms / 1000.0)
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+
+    def stop():
+        nonlocal running
+        running = False
+
+    return {'frame': panel, 'stop': stop}

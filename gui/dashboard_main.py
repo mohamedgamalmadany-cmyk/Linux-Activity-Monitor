@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import messagebox
 import threading
 import time
+from datetime import datetime
 
 import database.database_operations as db
 import collectors_mainpulations.bash_history_collector as bash_collector
@@ -44,7 +45,16 @@ class Dashboard:
         self.auto_running = False
         
         # Create a scrollable content area so the UI fits smaller screens
-        gui_header.create_header(self.root)
+        header_frame, header_labels = gui_header.create_header(self.root)
+        self.header_labels = header_labels
+
+        # usage tracker
+        from usage_time_tracker import UsageTimeTracker
+        self.usage_tracker = UsageTimeTracker()
+        self.usage_tracker.start()
+        # bind global user events to record activity
+        self.root.bind_all('<Any-KeyPress>', lambda e: self.usage_tracker.record_activity())
+        self.root.bind_all('<Motion>', lambda e: self.usage_tracker.record_activity())
 
         # Scrollable frame
         container = tk.Frame(self.root)
@@ -74,6 +84,14 @@ class Dashboard:
         self.commands_table = gui_commands_table.create_commands_table(scrollable_frame)
         self.files_table = gui_files_table.create_files_table(scrollable_frame)
 
+        # New items section
+        self.new_items_frame = tk.Frame(scrollable_frame, bg=LIGHT)
+        self.new_items_frame.pack(fill='x', padx=20, pady=(0, 6))
+        tk.Label(self.new_items_frame, text='📁 New This Session', font=('Arial', 12, 'bold'), bg=LIGHT).pack(anchor='w')
+        self.new_items_list = tk.Listbox(self.new_items_frame, height=6)
+        self.new_items_list.pack(fill='x')
+        self.last_scan_time = datetime.now()
+
         # Receive auto, refresh, analytics buttons
         self.auto_btn, self.refresh_btn, self.analytics_btn = gui_control_buttons.create_control_buttons(
             scrollable_frame,
@@ -88,6 +106,8 @@ class Dashboard:
         
         # Initial refresh
         self.refresh_view()
+        # start periodic UI active-time updater
+        self._update_active_time_ui()
     
     def log_msg(self, msg):
         """Add message to log"""
@@ -143,6 +163,25 @@ class Dashboard:
                 self.files_table.insert('', 'end', values=(display, count))
             
             self.log_msg("✅ Refreshed")
+            # update last update label
+            try:
+                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                self.header_labels['last_update'].config(text=f"Last Update: {now}")
+            except Exception:
+                pass
+
+            # update new items list (files/folders created since last scan)
+            try:
+                from new_items_detector import find_new_items
+                new = find_new_items(self.last_scan_time, max_items=50)
+                self.new_items_list.delete(0, 'end')
+                for it in new:
+                    ts = it['ctime'].strftime('%H:%M') if it.get('ctime') else '--'
+                    name = it['path'].split('/')[-1]
+                    self.new_items_list.insert('end', f"{name} ({ts})")
+                self.last_scan_time = datetime.now()
+            except Exception:
+                pass
         except Exception as e:
             self.log_msg(f"❌ Error: {e}")
     
@@ -168,6 +207,21 @@ class Dashboard:
                 pass
             # analytics button should remain enabled
             self.log_msg("⏸️ Auto stopped")
+
+    def _update_active_time_ui(self):
+        try:
+            active = self.usage_tracker.get_active_time()
+            mins = int(active.total_seconds() // 60)
+            hrs = mins // 60
+            rem_m = mins % 60
+            self.header_labels['active_time'].config(text=f"⏱️ Active Time: {hrs}h {rem_m}m")
+        except Exception:
+            pass
+        # schedule again in 30 seconds
+        try:
+            self.root.after(30000, self._update_active_time_ui)
+        except Exception:
+            pass
 
     def open_analytics(self):
         """Open the analytics window using the analyzer."""

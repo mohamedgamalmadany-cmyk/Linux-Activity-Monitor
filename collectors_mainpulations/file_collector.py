@@ -6,6 +6,7 @@ Collects opened/accessed files only
 
 import subprocess
 import os
+import duplicate_checker
 
 
 def get_open_files(max_files=50):
@@ -60,6 +61,10 @@ def collect_and_save(db_save_function, limit=10):
     files = get_open_files()
     
     for filepath in files[:limit]:
-        db_save_function('file_access', filepath)
+        try:
+            h = duplicate_checker.make_hash('file_access', filepath)
+            db_save_function('file_access', filepath, hash_value=h)
+        except Exception:
+            db_save_function('file_access', filepath)
     
     return len(files[:limit])

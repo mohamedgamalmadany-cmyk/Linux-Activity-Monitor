@@ -5,6 +5,7 @@ Collects bash commands only
 """
 
 import os
+import duplicate_checker
 
 
 def get_bash_commands(max_commands=50):
@@ -29,6 +30,10 @@ def collect_and_save(db_save_function, limit=10):
     commands = get_bash_commands()
     
     for cmd in commands[-limit:]:
-        db_save_function('bash_command', cmd)
+        try:
+            h = duplicate_checker.make_hash('bash_command', cmd)
+            db_save_function('bash_command', cmd, hash_value=h)
+        except Exception:
+            db_save_function('bash_command', cmd)
     
     return len(commands[-limit:])
